@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.2.2/web3.min.js"></script>
+    <title>Document</title>
+
+	<!-- Bootstrap icons-->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
+</head>
+<body>
+    <p>Please log in using your MetaMask wallet.</p>
+    <button id="connect">Connect to MetaMask</button>
+    <p id="connectedAddress" style="display: none;">Connected address: <span></span></p>
+
+    <div id="owner"  style="display: none;">
+        
+		<button id="createBook">create a new book</button>
+	</div>
+	<br><br><br>
+
+
+	<button id="kreiranjeKnjige">Kreiraj Knjigu</button>
+	<br>
+	<form id="kreiraj" style="display: none;">
+		<div class="form-group">
+		  <label for="exampleInputEmail1">Author</label>
+		  <input type="text" class="form-control" aria-describedby="emailHelp" id="author" placeholder="author">
+		</div>
+		<br>
+		<div class="form-group">
+		  <label for="exampleInputPassword1">Name of the Book</label>
+		  <input type="text" class="form-control" id="name" placeholder="name">
+		</div>
+		<br>
+		<div class="form-group">
+			<label class="exampleInputEmail1" for="exampleCheck1">Year of release</label>
+		    <input type="number" class="form-check-input" id="year" placeholder="year">
+		</div>
+		<br>
+		<div class="form-group">
+			<label for="exampleInputEmail1" for="exampleCheck1">Genre</label>
+			<input type="text" class="form-control" id="genre" placeholder="genre">
+		</div>
+		<br>
+		<div class="form-group">
+			<label for="exampleInputEmail1">Price</label>
+			<input type="number" class="form-control" id="price" placeholder="price">
+		</div>
+	</form>
+
+	<br><br><br><br><br><br>
+	<button id="ShowUsers_btn" style="display: none;">Show Users</button>
+	<br>
+
+	<div id="ShowUsers"></div>
+    <br><br>
+
+	<div id="buyBook" style="display: none;">
+		<button id="buyBook-btn" data-book-id="5">Buy Book</button>
+
+        <input id="nameUser" placeholder="name"></input>
+        <input id="city" placeholder="City"></input>
+        <input id="adresa" placeholder="Address"></input>
+        <input id="country" placeholder="Country" ></input>
+		<input id="zipcode" placeholder="Zipcode" ></input>
+		<br><br>
+		
+	</div>
+
+	<br><br><br><br>
+
+    <button id="ShowBooks" style="display: none;">Show Books</button>
+	<br>
+    <div id="flightss"></div>
+
+	<br><br>
+	<button id="ShowBoughtsBooks" style="display: none;">Show Bought Books</button>
+	<br>
+    <div id="BoughtsBooks"></div>
+
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+    const abi = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_owner",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
+			}
+		],
+		"name": "BookMade",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "city",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "adresa",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "country",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "zipcode",
+				"type": "uint256"
+			}
+		],
+		"name": "buyBook",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_author",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_year",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_genre",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_price",
+				"type": "uint256"
+			}
+		],
+		"name": "createBook",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getAvailableBooks",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "author",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "year_of_publishing",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "genre",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct BookStore.Book[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			}
+		],
+		"name": "getBookId",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "author",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "year_of_publishing",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "genre",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct BookStore.Book",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getBoughtBooks",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "author",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "year_of_publishing",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "genre",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct BookStore.Book[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getUsers",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "a",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "city",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "adresa",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "country",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "zipcode",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct BookStore.User[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "IsItOwner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "list_of_books",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "author",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "year_of_publishing",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "genre",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+    
+	const address = "0x2697Ad1ee286E34c9e792609552aDB3743C6c473"
+	
+
+	function convertToLowerCase(hash) {
+		var lowercaseHash = hash.toLowerCase();
+		return lowercaseHash;
+	}
+
+    $('#connect').click(async function () {
+        if (window.ethereum) {
+            let addresses = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            window.web3 = new Web3(window.ethereum);
+			console.log("adresa 0",addresses[0])
+
+            console.log("Adrese neke nemam pojma",addresses);
+            
+            $('#connect').hide(); 
+            $('#connectedAddress').css('display', 'block'); 
+            $('#connectedAddress > span').html(addresses[0]); 
+            $('#ShowBooks').css('display', 'block'); 
+			$('#buyBook').css('display', 'block');
+			$('#ShowBoughtsBooks').css('display', 'block');
+
+			const contract = new web3.eth.Contract(abi, address);
+			let isOwner = await contract.methods.IsItOwner().call();
+			console.log("isOwner",isOwner);
+			if(convertToLowerCase(isOwner)==addresses[0]){
+				$('#owner').css('display', 'block'); 
+				$('#ShowUsers_btn').css('display', 'block');
+			}
+		} 
+    })
+
+	let kupovanje = false;
+
+	$('#kreiranjeKnjige').click(function () {
+		if(!kupovanje){
+			$('#kreiraj').show(); 
+		} else {
+			$('#kreiraj').hide(); 
+		}
+		kupovanje = !kupovanje;
+
+	});
+
+    let flightsVisible = false;
+
+    $('#ShowBooks').click(function () {
+        getBooks();
+        if (!flightsVisible) {
+            $('#flightss').show(); // Show the flights
+            let content='Hide Books';
+            $('#ShowBooks').html(content);
+        } else {
+            $('#flightss').hide(); // Hide the flights
+            let content='Show Books';
+            $('#ShowBooks').html(content);
+        }
+        flightsVisible = !flightsVisible; // Toggle the flag
+    });
+
+    async function getBooks() {
+        const contract = new web3.eth.Contract(abi, address);
+        let Books = await contract.methods.getAvailableBooks().call();
+        console.log(Books);
+
+        let content = '';
+        for (let book of Books) {
+            content += `
+                <p>
+                    <b>Book id: ${book.id}</b>
+                    <br>
+                    Author: ${book.author}
+                    <br>
+					<br>
+                    Name: ${book.name}
+                    <br>
+					<br>
+                    Year of Publishing: ${book.year_of_publishing}
+                    <br>
+                    <br>Genre: ${book.genre}</br>
+					<br>Price: ${book.price} BAM </br>
+					<button id="buyBook-btn" data-book-id="${book.id}">Buy Book</button>
+					
+                </p>
+            `
+        }
+        $('#flightss').html(content);
+    } 
+
+    async function addBook() {
+        try {
+            const contract = new web3.eth.Contract(abi, address);
+            let author = $('#author').val();
+            let name = $('#name').val();
+            let year = $('#year').val();
+            let genre = $('#genre').val(); 
+            let price = $('#price').val(); 
+
+            let addresses = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            await contract.methods.createBook(author, name, year, genre, price).send({ from: addresses[0] });
+			$('#author').val('');
+			$('#name').val('');
+			$('#year').val('');
+			$('#genre').val('');
+			$('#price').val('');
+
+			let Books = await contract.methods.getAvailableBooks().call();
+			let id = Books[Books.length - 1].id;
+			console.log("id od knjige",id);
+
+			contract.events.BookMade().on('data', function (event) {
+                console.log(event);
+        	})
+
+            console.log("Book added");
+        } catch (error) {
+            console.error("Error adding book:", error);
+        }
+    }
+
+    $('#createBook').click(async function () {
+        try {
+            await addBook();
+            getBooks();
+        } catch (error) {
+            console.error("Error adding book:", error);
+        }
+    });
+
+	let usersVisible = false;
+	$('#ShowUsers_btn').click(function () {
+        getUsers();
+        if (!usersVisible) {
+            $('#ShowUsers').show(); // Show the flights
+            let content='Hide Users';
+            $('#ShowUsers_btn').html(content);
+        } else {
+            $('#ShowUsers').hide(); // Hide the flights
+            let content='Show Users';
+            $('#ShowUsers_btn').html(content);
+        }
+        usersVisible = !usersVisible; // Toggle the flag
+    });
+
+	async function getUsers() {
+        const contract = new web3.eth.Contract(abi, address);
+		let addresses = await window.ethereum.request({ method: 'eth_requestAccounts' });
+		let isOwner = await contract.methods.IsItOwner().call();
+        let users = await contract.methods.getUsers().call({ from: isOwner });
+        console.log(users);
+
+        let content = '';
+        for (let user of users) {
+            content += `
+                <p>
+                    <b>Metamask Address: ${user.a}</b>
+                    <br>
+                    Name: ${user.name}
+                    <br>
+					<br>
+                    City: ${user.city}
+                    <br>
+					<br>
+                    Address: ${user.adresa}
+                    <br>
+                    <br>Country: ${user.country}</br>
+					<br>Zipcode: ${user.zipcode}</br>
+					
+                </p>
+            `
+        }
+        $('#ShowUsers').html(content);
+    } 
+
+	async function BuyBook(BookId) {
+        try {
+            const contract = new web3.eth.Contract(abi, address);
+			let cijena;
+        
+            let name = $('#nameUser').val();
+            let city = $('#city').val();
+            let adresa = $('#adresa').val(); 
+            let country = $('#country').val(); 
+			let zipcode = $('#zipcode').val(); 
+			let knjiga = await contract.methods.list_of_books(BookId).call();
+			console.log("knjiga",knjiga);
+			cijena = knjiga.price;
+			console.log("cijena",cijena);
+
+            let addresses = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            await contract.methods.buyBook(BookId, name, city, adresa, country, zipcode).send({ from: addresses[0], value: cijena });
+			$('#nameUser').val('');
+			$('#city').val('');
+			$('#adresa').val('');
+			$('#country').val('');
+			$('#zipcode').val('');
+
+            console.log("Book added");
+        } catch (error) {
+            console.error("Error adding book:", error);
+        }
+    }
+
+	$('#buyBook-btn').click(async function () {
+        try {
+			const bookId = $(this).data('book-id');
+			console.log("bookId",bookId);
+            await BuyBook(bookId);
+            getBooks();
+        } catch (error) {
+            console.error("Error adding book:", error);
+        }
+    });
+
+	$('#flightss').on('click', '#buyBook-btn', async function () {
+		try {
+			const bookId = $(this).data('book-id');
+			console.log("bookId", bookId);
+			await BuyBook(bookId);
+			getBooks();
+		} catch (error) {
+			console.error("Error buying book:", error);
+		}
+	});
+
+	let BoughtVisible = false;
+
+	$('#ShowBoughtsBooks').click(function () {
+        getBoughtBooks();
+        if (!BoughtVisible) {
+            $('#BoughtsBooks').show(); 
+            let content='Hide Bought Books';
+            $('#ShowBoughtsBooks').html(content);
+        } else {
+            $('#BoughtsBooks').hide(); 
+            let content='Show Bought Books';
+            $('#ShowBoughtsBooks').html(content);
+        }
+        BoughtVisible = !BoughtVisible; 
+    });
+
+    async function getBoughtBooks() {
+		try {
+			const contract = new web3.eth.Contract(abi, address);
+			const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+			const userAddress = accounts[0]; // Get the user's MetaMask address
+			
+			let Books = await contract.methods.getBoughtBooks().call({ from: userAddress });
+			console.log(Books);
+
+			let content = '';
+			for (let i = 0; i < Books.length; i++) {
+				content += `
+					<p>
+						<b>Book id: ${Books[i].id}</b>
+						<br>
+						Author: ${Books[i].author}
+						<br>
+						<br>
+						Name: ${Books[i].name}
+						<br>
+						<br>
+						Year of Publishing: ${Books[i].year_of_publishing}
+						<br>
+						<br>Genre: ${Books[i].genre}</br>
+						<br>Price: ${web3.utils.fromWei(Books[i].price, 'ether')} Ether</br>
+					</p>
+				`;
+			}
+			$('#BoughtsBooks').html(content);
+		} catch (error) {
+			console.error("Error fetching bought books:", error);
+		}
+	}
+
+</script>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
